@@ -3,8 +3,9 @@ import '../models/match.dart';
 
 class MatchCard extends StatelessWidget {
   final Match match;
+  final Map<String, String> flags;
 
-  const MatchCard({super.key, required this.match});
+  const MatchCard({super.key, required this.match, required this.flags});
 
   @override
   Widget build(BuildContext context) {
@@ -28,17 +29,29 @@ class MatchCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Équipes + (score si joué, sinon heure)
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    match.team1,
-                    textAlign: TextAlign.end,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          match.team1,
+                          textAlign: TextAlign.end,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _flagFor(match.team1),
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                    ],
                   ),
                 ),
                 Padding(
@@ -55,19 +68,31 @@ class MatchCard extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: Text(
-                    match.team2,
-                    textAlign: TextAlign.start,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        _flagFor(match.team2),
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          match.team2,
+                          textAlign: TextAlign.start,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
 
-            // Buteurs (seulement si le match est joué et qu'il y a des buts)
             if (played &&
                 (match.goals1.isNotEmpty || match.goals2.isNotEmpty)) ...[
               const SizedBox(height: 10),
@@ -108,4 +133,6 @@ class MatchCard extends StatelessWidget {
           .toList(),
     );
   }
+
+  String _flagFor(String teamName) => flags[teamName] ?? '';
 }

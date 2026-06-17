@@ -34,11 +34,19 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final WorldCupApi _api = WorldCupApi();
   late Future<List<Match>> _matchesFuture;
+  Map<String, String> _flags = {};
 
   @override
   void initState() {
     super.initState();
-    _matchesFuture = _api.fetchMatches();
+    _matchesFuture = _loadData();
+  }
+
+  Future<List<Match>> _loadData() async {
+    final teams = await _api.fetchTeams();
+    _flags = {for (final t in teams) t.name: t.flagIcon};
+
+    return _api.fetchMatches();
   }
 
   @override
@@ -88,7 +96,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return ListView.builder(
       itemCount: matches.length,
-      itemBuilder: (context, index) => MatchCard(match: matches[index]),
+      itemBuilder: (context, index) =>
+          MatchCard(match: matches[index], flags: _flags),
     );
   }
 }
