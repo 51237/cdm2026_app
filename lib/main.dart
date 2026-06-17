@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/match.dart';
 import 'services/world_cup_api.dart';
+import 'widgets/match_card.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,47 +34,70 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final WorldCupApi _api = WorldCupApi();
   late Future<List<Match>> _matchesFuture;
+  Map<String, String> _flags = {};
 
   @override
   void initState() {
     super.initState();
-    _matchesFuture = _api.fetchMatches();
+    _matchesFuture = _loadData();
+  }
+
+  Future<List<Match>> _loadData() async {
+    final teams = await _api.fetchTeams();
+    _flags = {for (final t in teams) t.name: t.flagIcon};
+
+    return _api.fetchMatches();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('World Cup 2026'), centerTitle: true),
-      body: FutureBuilder<List<Match>>(
-        future: _matchesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Erreur : ${snapshot.error}'));
-          }
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('World Cup 2026'),
+          centerTitle: true,
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'À venir'),
+              Tab(text: 'Résultats'),
+            ],
+          ),
+        ),
+        body: FutureBuilder<List<Match>>(
+          future: _matchesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Erreur : ${snapshot.error}'));
+            }
 
-          final matches = snapshot.data!;
-          final first = matches.first;
+            final all = snapshot.data!;
+            final upcoming = all.where((m) => m.isUpcoming).toList();
+            final played = all.where((m) => !m.isUpcoming).toList();
 
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            return TabBarView(
               children: [
-                Text(
-                  '${matches.length} matches chargés',
-                  style: const TextStyle(fontSize: 22),
-                ),
-                const SizedBox(height: 16),
-                Text('${first.team1} vs ${first.team2}'),
-                Text('${first.date} • ${first.time}'),
-                Text('${first.group} • ${first.ground}'),
+                _matchList(upcoming, 'Aucun match à venir'),
+                _matchList(played, 'Aucun résultat'),
               ],
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
+    );
+  }
+
+  Widget _matchList(List<Match> matches, String emptyMessage) {
+    if (matches.isEmpty) {
+      return Center(child: Text(emptyMessage));
+    }
+    return ListView.builder(
+      itemCount: matches.length,
+      itemBuilder: (context, index) =>
+          MatchCard(match: matches[index], flags: _flags),
     );
   }
 }
