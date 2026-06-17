@@ -1,3 +1,18 @@
+class Goal {
+  final String name;
+  final String minute;
+
+  const Goal({required this.name, required this.minute});
+
+  factory Goal.fromJson(Map<String, dynamic> json) {
+    return Goal(
+      name: json['name'] as String,
+      // la minute est parfois un int, parfois une string selon les entrées
+      minute: json['minute'].toString(),
+    );
+  }
+}
+
 class Match {
   final int? num;
   final String round;
@@ -8,6 +23,8 @@ class Match {
   final String? group;
   final String ground;
   final List<int>? scoreFt;
+  final List<Goal> goals1;
+  final List<Goal> goals2;
 
   const Match({
     this.num,
@@ -16,9 +33,11 @@ class Match {
     required this.time,
     required this.team1,
     required this.team2,
-    this.group,
     required this.ground,
+    this.group,
     this.scoreFt,
+    this.goals1 = const [],
+    this.goals2 = const [],
   });
 
   bool get isUpcoming => scoreFt == null;
@@ -28,6 +47,13 @@ class Match {
     final score = json['score'];
     if (score != null && score['ft'] != null) {
       ft = List<int>.from(score['ft'] as List);
+    }
+
+    List<Goal> parseGoals(dynamic raw) {
+      if (raw == null) return const [];
+      return (raw as List)
+          .map((g) => Goal.fromJson(g as Map<String, dynamic>))
+          .toList();
     }
 
     return Match(
@@ -40,6 +66,8 @@ class Match {
       group: json['group'] as String?,
       ground: json['ground'] as String,
       scoreFt: ft,
+      goals1: parseGoals(json['goals1']),
+      goals2: parseGoals(json['goals2']),
     );
   }
 }
