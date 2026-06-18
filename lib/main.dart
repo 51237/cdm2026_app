@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/match.dart';
 import 'services/world_cup_api.dart';
+import 'services/lineup_service.dart';
 import 'widgets/match_card.dart';
 
 void main() {
@@ -33,6 +34,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final WorldCupApi _api = WorldCupApi();
+  final LineupService _lineupService = LineupService();
   late Future<List<Match>> _matchesFuture;
   Map<String, String> _flags = {};
 
@@ -45,6 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<Match>> _loadData() async {
     final teams = await _api.fetchTeams();
     _flags = {for (final t in teams) t.name: t.flagIcon};
+
+    // load bundled compositions (assets/lineups.json)
+    await _lineupService.load();
 
     return _api.fetchMatches();
   }
@@ -96,8 +101,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return ListView.builder(
       itemCount: matches.length,
-      itemBuilder: (context, index) =>
-          MatchCard(match: matches[index], flags: _flags),
+      itemBuilder: (context, index) => MatchCard(
+        match: matches[index],
+        flags: _flags,
+        lineupService: _lineupService,
+      ),
     );
   }
 }
